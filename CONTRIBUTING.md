@@ -1,39 +1,60 @@
-# 협업 규칙 (CONTRIBUTING)
+# 🤝 프로젝트 협업 및 실험 가이드 (CONTRIBUTING)
 
-이 레포는 **PR 기반**으로 운영한다. `main` 직접 push 는 막혀 있고, 모든 변경은
-브랜치 → Pull Request → **총합 관리자(@zeldaim) 리뷰·머지**로만 반영된다.
+본 레포지토리는 **인프라 구축, 공격 시뮬레이션, AI 탐지 모델 실험**을 기록하고 공유하는 공간입니다.  
+`main` 브랜치는 항상 **"검증 완료된 안정된 환경 및 문서"** 상태를 유지하며, 모든 변경은 브랜치 → Pull Request(PR) → **관리자(팀장/소유자) 승인 및 머지**로 반영됩니다.
 
-## 작업 흐름
+---
+
+## 1. 기본 작업 흐름
 
 ```bash
-# 1. 최신 main 받기
-git checkout main && git pull
+# 1. 최신 main 동기화
+git checkout main
+git pull origin main
 
-# 2. 작업 브랜치 생성 (main 에서 바로 작업 금지)
-git checkout -b feat/내작업            # 기능: feat/, 버그: fix/, 문서: docs/, 실험: exp/
+# 2. 작업 브랜치 생성 (작업 성격에 맞는 접두사 사용)
+git checkout -b <분류>/<작업요약>
+# 예: infra/wazuh-agent-rule
+# 예: exp/idor-randomforest-test
+# 예: docs/troubleshoot-closed-network
 
-# 3. 작업 후 브랜치 push (main 아님!)
-git add -A && git commit -m "feat: 무엇을 했는지"
-git push -u origin feat/내작업
+# 3. 작업 후 커밋 및 브랜치 push (main에 직접 push 금지)
+git add .
+git commit -m "<분류>: 어떤 환경/실험을 변경했는지 요약"
+git push -u origin <분류>/<작업요약>
 
-# 4. GitHub 에서 Pull Request 생성 → 관리자가 리뷰·머지
+# 4. GitHub에서 Pull Request(PR) 생성 -> 팀 관리자 검토 및 승인(Approve) 후 머지
 ```
 
-## 브랜치 이름 규칙
-- `feat/<이름>` 기능 · `fix/<이름>` 버그 · `docs/<이름>` 문서 · `exp/<이름>` 실험
+---
 
-## 커밋 메시지
-- 접두어 + 한 줄 요약: `feat:`, `fix:`, `docs:`, `exp:`, `chore:`
-- 예: `feat(ml): RF 세션분할 학습 스크립트 추가`
+## 2. 작업 분류 및 커밋 규칙
 
-## 커밋하면 안 되는 것 (`.gitignore` 확인)
-- VM 디스크·이미지 (`.vmdk`, `.vmx`, `.iso`)
-- 100MB 이상 원천 로그 — `ml/data/raw_logs/` 는 샘플만, 대용량은 제외
-- 학습 모델 가중치(`.joblib`, `.pkl`)가 크면 Releases/LFS 로
-- **비밀번호·자격증명·실제 토큰·운영 IP** (README 처럼 공유해야 하면 마스킹)
+복잡한 개발 규칙 대신, 아래 4가지 분류를 주로 사용합니다.
 
-## 디렉터리 소유
-`.github/CODEOWNERS` 참고 — 경로별 담당자가 PR 에 자동 리뷰어로 붙는다.
+| 분류 | 대상 | 커밋 메시지 예시 |
+| :--- | :--- | :--- |
+| `infra` | 네트워크, 방화벽, Docker, Wazuh 설정 변경 | `infra: Wazuh 에이전트 Apache 에러로그 수집 경로 추가` |
+| `exp` | 공격 시나리오 실행, 모델 학습 실험 및 결과 갱신 | `exp: IDOR 공격 세션 로그 수집 및 탐지 결과 기록` |
+| `ml` | 전처리 스크립트, 피처 엔지니어링, 모델 코드 수정 | `ml: 세션 기반 30초 윈도우 특징 추출 로직 보완` |
+| `docs` | 트러블슈팅 리포트, 환경 구성 가이드, 아키텍처 문서화 | `docs: 03_방화벽 VIP 포트포워딩 설정 장애 해결 리포트 작성` |
 
-## 새 장애/설정 변경
-`docs/troubleshooting/` 에 `03_...`, `04_...` 형태로 문서 추가하고 README 표를 갱신한다.
+---
+
+## 3. 환경 구축 및 실험 시 지켜야 할 원칙
+
+### ① 설정 변경 시 (IaC & Config)
+- 가상머신 내부에서 직접 수정한 설정(`ossec.conf`, `docker-compose.yml`, 방화벽 룰 등)은 반드시 해당 레포지토리의 `infra/` 경로 파일에도 반영합니다.
+- 변경 이유와 변경된 값(IP, 포트, 권한 등)을 PR 설명에 간략히 적어 다른 팀원도 재현할 수 있게 합니다.
+
+### ② 장애 및 에러 해결 시 (Troubleshooting)
+- 환경 구축 중 발생한 오류를 해결했다면 `docs/troubleshooting/0X_내용.md`로 정리하여 기록합니다.
+
+### ③ 절대 커밋하면 안 되는 파일 (.gitignore 확인)
+- **가상머신 전체 파일**: `.vmdk`, `.vmx`, `.iso`, 스냅샷 파일
+- **보안 민감 정보**: 실제 외부 IP, 방화벽 관리자 패스워드, API 비밀키 (문서에는 `192.168.x.x`, `****` 등으로 마스킹)
+
+---
+
+## 4. 리뷰 및 머지(Merge)
+- PR이 등록되면 팀 관리자(팀장/소유자)가 내용을 확인하고 **Files changed 탭 ➜ Review changes ➜ Approve** 후 머지합니다.

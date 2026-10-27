@@ -15,12 +15,6 @@ vmware/
 *.tar.gz
 *.iso
 
-# === 대용량 원천 로그 (raw log 제외, .gitkeep 유지) ===
-ml/data/raw_logs/*
-!ml/data/raw_logs/.gitkeep
-ML/data/raw_logs/*
-!ML/data/raw_logs/.gitkeep
-
 # === Python 캐시 및 가상환경 ===
 __pycache__/
 *.py[cod]
